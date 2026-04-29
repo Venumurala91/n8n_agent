@@ -1,0 +1,538 @@
+{
+  "name": "JHS_QA_Portal_FINAL",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "8de6fc92-a2c2-4c1a-b82d-d12e489d07df",
+      "name": "When chat message received",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1,
+      "position": [
+        200,
+        1488
+      ],
+      "webhookId": "475e2242-b090-41be-b5f1-183fc2ad8ead"
+    },
+    {
+      "parameters": {
+        "jsCode": "const { spawnSync } = require('child_process');\nconst query = $input.item.json.chatInput;\nconst pythonPath = '/home/node/venv/bin/python3';\nconst scriptPath = '/home/node/n8n-local-files/cache_manager.py';\n\ntry {\n  const result = spawnSync(pythonPath, [scriptPath, 'get', query], { encoding: 'utf8' });\n  const output = JSON.parse(result.stdout.trim());\n  return { \n    hit: output.hit, \n    response: output.response || '', \n    chatInput: query \n  };\n} catch (e) {\n  return { \n    hit: false, \n    chatInput: query, \n    error: e.message \n  };\n}"
+      },
+      "id": "b1a2c3d4-e5f6-4a5b-b6c7-d8e9f0a1b2c3",
+      "name": "Check Cache",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        450,
+        1488
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "type": "string"
+          },
+          "conditions": [
+            {
+              "id": "c7d8e9f0",
+              "leftValue": "={{ $json.hit }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "c2a3b4d5-e6f7-4b6c-c7d8-e9f0a1b2c3d4",
+      "name": "Is Cached?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        700,
+        1488
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return { output: $input.item.json.response };"
+      },
+      "id": "e4f5a6b7-c8d9-4e0f-a1b2-c3d4e5f6a7b8",
+      "name": "Format Cached Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        950,
+        1350
+      ]
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "\n\nYou are a Senior Production QA & Playwright Automation Engineer for JioHumsafar.\n\n════════════════════════════════════════\n📂 FILE ACCESS & DOWNLOADS\n════════════════════════════════════════\n- ALWAYS provide the user with the direct Portal link. It has the best UI and buttons:\n  [ 🖥️ OPEN AUTOMATION PORTAL ](http://localhost:5678/webhook/final-portal)\n\n- When providing individual download links, use this BUTTON format:\n  [ 📥 DOWNLOAD EXCEL FILE ](http://localhost:5678/webhook/direct-download?file=unit_tests.xlsx)\n  [ 📥 DOWNLOAD PDF REPORT ](http://localhost:5678/webhook/direct-download?file=unit_tests.pdf)\n  [ 🖼️ VIEW SCREENSHOT ](http://localhost:5678/webhook/direct-download?file=screenshots/FILENAME.png)\n\n════════════════════════════════════════\n⚠️ CRITICAL 404 FIX\n════════════════════════════════════════\n1. Ensure the toggle in the **top-right** of n8n is **ACTIVE (Green)**.\n2. If it is already Active, toggle it **OFF** and **ON** again.\n3. Verify you are using URL: http://localhost:5678/webhook/direct-download\n\n════════════════════════════════════════\n🔐 APPLICATION LOGIN (HANDLED AUTOMATICALLY)\n════════════════════════════════════════\nURL      : http://103.123.173.50:1009\nUsername : ranjit@assettl.com\nPassword : Rjil@12345\nOTP      : 123456\n\nThe run_playwright_test tool AUTOMATICALLY handles the full login sequence:\n  1. Opens the URL\n  2. Fills username → input[formcontrolname=\"username\"]\n  3. Fills password → input#password-field\n  4. Clicks login → button.login_btn\n  5. Fills OTP    → input#otp_Email\n  6. Clicks login again → button.login_btn\n  7. Waits for dashboard → text=Vehicle Status\n\n════════════════════════════════════════\n🚫 ABSOLUTE FORBIDDEN RULES FOR run_playwright_test INPUT\n════════════════════════════════════════\nNEVER include ANY of these in your input:\n  ❌ require('playwright')\n  ❌ require('playwright-core')\n  ❌ chromium.launch()\n  ❌ browser.newContext()\n  ❌ browser.newPage()\n  ❌ page.goto()\n  ❌ page.fill('input[formcontrolname=\"username\"]', ...)\n  ❌ page.fill('input#password-field', ...)\n  ❌ page.fill('input#otp_Email', ...)\n  ❌ page.click('button.login_btn')\n  ❌ page.waitForSelector('text=Vehicle Status', ...)\n  ❌ (async () => { ... })()\n  ❌ browser.close()\n  ❌ text=\"Sign In\" (this selector does NOT exist in the app)\n  ❌ Any login-related code whatsoever\n\n════════════════════════════════════════\n✅ WHAT TO PROVIDE TO run_playwright_test\n════════════════════════════════════════\nOnly post-login Playwright steps. The `page` object and `takeScreenshot` function are already available.\n\nEXAMPLE — Login test (just take a screenshot, login is already done):\n  await takeScreenshot('Login_Success_Dashboard');\n\nEXAMPLE — Navigation test:\n  await page.click('text=\"Tracking\"');\n  await page.waitForTimeout(1000);\n  await takeScreenshot('Tracking_Menu');\n  await page.click('text=\"Live\"');\n  await page.waitForSelector('canvas', { timeout: 15000 });\n  await takeScreenshot('Live_Map_Loaded');\n\nEXAMPLE — Form test:\n  await page.click('text=\"Reports\"');\n  await page.waitForTimeout(1500);\n  await takeScreenshot('Reports_Page');\n  await page.click('button:has-text(\"Generate\")');\n  await page.waitForTimeout(2000);\n  await takeScreenshot('Report_Generated');\n\n════════════════════════════════════════\n🗺 SIDEBAR NAVIGATION GUIDE\n════════════════════════════════════════\n- Always click PARENT menu first and wait 1000ms before clicking submenu.\n- Use: await page.click('text=\"MenuName\"'); await page.waitForTimeout(1000);\n- Then: await page.click('text=\"SubMenuName\"');\n- For canvas/map pages: await page.waitForSelector('canvas', { timeout: 15000 });\n- For table pages: await page.waitForSelector('table', { timeout: 10000 });\n- For form pages: await page.waitForSelector('form', { timeout: 10000 });\n\n════════════════════════════════════════\n📋 MANDATORY WORKFLOW ORDER\n════════════════════════════════════════\n1. FIRST: Call generate_test_cases with min 10 professional test cases.\n2. SECOND: Call run_playwright_test with ONLY post-login steps.\n3. ALWAYS confirm: test cases logged + PASS/FAIL status + screenshot file names.\n\n════════════════════════════════════════\n📸 SCREENSHOT NAMING CONVENTION\n════════════════════════════════════════\nUse descriptive names: 'FeatureName_StepName'\nExamples: 'Login_Dashboard', 'Tracking_Live_Map', 'Reports_Table_Loaded'\nA SUCCESS_FINAL screenshot is taken automatically on pass.\nA FAILURE_ERROR screenshot is taken automatically on fail.\n\n════════════════════════════════════════\n👋 GREETINGS & GENERAL CHAT\n════════════════════════════════════════\n- For simple greetings like \"hi\", \"hello\", \"hey\", or \"how are you\", respond naturally and friendly WITHOUT using any tools.\n- Do NOT attempt to run Playwright tests or fetch tracker issues unless the user asks for a specific QA/Automation task."
+        }
+      },
+      "id": "4d0eae6b-8a98-4531-9be4-c7edf38397b5",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        1000,
+        1550
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const { spawnSync } = require('child_process');\n// We get chatInput from the 'Check Cache' node\nconst query = $('Check Cache').item.json.chatInput;\nconst response = $input.item.json.output; // LangChain agent output is in 'output'\nconst pythonPath = '/home/node/venv/bin/python3';\nconst scriptPath = '/home/node/n8n-local-files/cache_manager.py';\n\ntry {\n  // Use spawnSync with arguments array to handle special characters correctly\n  spawnSync(pythonPath, [scriptPath, 'set', query, response], { encoding: 'utf8' });\n} catch (e) {\n  console.error('Cache save failed:', e.message);\n}\n\nreturn { output: response };"
+      },
+      "id": "d3a4b5d6-e7f8-4c7d-d8e9-f0a1b2c3d4e5",
+      "name": "Save Cache",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1300,
+        1550
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "append",
+        "options": {}
+      },
+      "id": "f5e6d7c8-b9a0-4c1d-8e2f-3a4b5c6d7e8f",
+      "name": "Merge Branches",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        1550,
+        1450
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return { output: $input.item.json.output };"
+      },
+      "id": "a1b2c3d4-e5f6-4a5b-b6c7-d8e9f0a1b2c3",
+      "name": "Final Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1800,
+        1450
+      ]
+    },
+    {
+      "parameters": {
+        "sessionKey": "={{ $('When chat message received').item.json.sessionId ?? 'default_session' }}"
+      },
+      "id": "9e79646c-8416-499f-9eca-c653668e4c9a",
+      "name": "Window Buffer Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1,
+      "position": [
+        1000,
+        1800
+      ]
+    },
+    {
+      "parameters": {
+        "name": "generate_test_cases",
+        "description": "MANDATORY TOOL TO DOCUMENT TESTS. Generates and appends a list of Production-Level test cases into unit_tests.xlsx. Expects an array (min 10 recommended) of test case objects. Input JSON: { \"feature_id\": \"...\", \"feature_description\": \"...\", \"written_by\": \"...\", \"version\": \"...\", \"test_cases\": [{\"ts_id\", \"ts_description\", \"tc_id\", \"tc_description\", \"test_steps\", \"test_data\", \"expected_result\", \"severity\"}, ...] }",
+        "jsCode": "const { execSync } = require('child_process');\nconst fs = require('fs');\nconst filesPath = '/home/node/n8n-local-files';\n\nif (!fs.existsSync(filesPath)) {\n  fs.mkdirSync(filesPath, { recursive: true });\n}\n\nlet input = {};\ntry {\n  input = (typeof query === 'string') ? JSON.parse(query) : query;\n} catch (e) {\n  return `\u274c ERROR: Invalid JSON input for tool: ${e.message}. Received: ${query}`;\n}\n\nconst feature_id = input.feature_id || 'GEN-001';\nconst feature_description = input.feature_description || 'General Feature';\nconst written_by = input.written_by || 'QA_Agent';\nconst version = input.version || '1.0';\nconst test_cases = input.test_cases || [];\n\nif (test_cases.length === 0) {\n  return '\u274c ERROR: No test cases provided in the input.';\n}\n\nconst pyScript = `\nimport json, os, sys\nfrom openpyxl import Workbook, load_workbook\nfrom openpyxl.styles import Font, PatternFill, Alignment, Border, Side\nfrom openpyxl.utils import get_column_letter\n\nFILES_PATH = '/home/node/n8n-local-files'\nEXCEL_PATH = os.path.join(FILES_PATH, 'unit_tests.xlsx')\nSHEET_NAME = 'Unit Test Cases'\n\nHEADERS = [\n    'Feature ID', 'Feature Description', 'TC written by',\n    'TS ID', 'TS Description', 'TC ID', 'TC Description',\n    'Test Steps', 'Test Data', 'Expected Result',\n    'Actual Result', 'Status', 'Severity', 'Comments', 'Version'\n]\n\nCOL_WIDTHS = [12, 35, 15, 10, 35, 10, 35, 50, 20, 35, 20, 12, 12, 20, 10]\n\nthin = Side(style='thin', color='000000')\nborder = Border(left=thin, right=thin, top=thin, bottom=thin)\ncenter = Alignment(horizontal='center', vertical='center', wrap_text=True)\nleft_wrap = Alignment(horizontal='left', vertical='center', wrap_text=True)\n\ndef style_header_row(ws):\n    header_fill = PatternFill('solid', start_color='1F4E79', end_color='1F4E79')\n    header_font = Font(bold=True, color='FFFFFF', name='Arial', size=10)\n    for col in range(1, len(HEADERS) + 1):\n        cell = ws.cell(row=1, column=col)\n        cell.font = header_font\n        cell.fill = header_fill\n        cell.alignment = center\n        cell.border = border\n    ws.row_dimensions[1].height = 30\n    for i, w in enumerate(COL_WIDTHS, 1):\n        ws.column_dimensions[get_column_letter(i)].width = w\n    ws.freeze_panes = 'A2'\n\ndef style_data_row(ws, row_num, alt=False):\n    fill_color = 'D6E4F0' if alt else 'FFFFFF'\n    fill = PatternFill('solid', start_color=fill_color, end_color=fill_color)\n    for col in range(1, len(HEADERS) + 1):\n        cell = ws.cell(row=row_num, column=col)\n        cell.font = Font(name='Arial', size=10)\n        cell.fill = fill\n        cell.alignment = left_wrap\n        cell.border = border\n    ws.row_dimensions[row_num].height = 60\n\nif os.path.exists(EXCEL_PATH):\n    try:\n        wb = load_workbook(EXCEL_PATH)\n        ws = wb[SHEET_NAME] if SHEET_NAME in wb.sheetnames else wb.active\n    except Exception:\n        wb = Workbook(); ws = wb.active; ws.title = SHEET_NAME\nelse:\n    wb = Workbook()\n    ws = wb.active\n    ws.title = SHEET_NAME\n    for col, h in enumerate(HEADERS, 1):\n        ws.cell(row=1, column=col, value=h)\n    style_header_row(ws)\n\ndef get_last_row(ws):\n    for row in range(ws.max_row, 0, -1):\n        if any(ws.cell(row=row, column=col).value for col in range(1, ws.max_column + 1)):\n            return row\n    return 0\n\nnext_row = get_last_row(ws) + 1\nfeature_id = ${JSON.stringify(feature_id)}\nfeature_description = ${JSON.stringify(feature_description)}\nwritten_by = ${JSON.stringify(written_by)}\nversion = ${JSON.stringify(version)}\ntest_cases = ${JSON.stringify(test_cases)}\n\nfor i, tc in enumerate(test_cases):\n    alt = (next_row % 2 == 0)\n    row = [\n        feature_id, feature_description, written_by,\n        tc.get('ts_id', ''), tc.get('ts_description', ''),\n        tc.get('tc_id', ''), tc.get('tc_description', ''),\n        tc.get('test_steps', ''), tc.get('test_data', ''),\n        tc.get('expected_result', ''), '', '',\n        tc.get('severity', ''), '', version\n    ]\n    for col, val in enumerate(row, 1):\n        ws.cell(row=next_row, column=col, value=val)\n    style_data_row(ws, next_row, alt=alt)\n    next_row += 1\n\nwb.save(EXCEL_PATH)\nprint(json.dumps({'status': 'success', 'rows_added': len(test_cases), 'file': EXCEL_PATH}))\n`;\n\nconst pyPath = filesPath + '/write_test_cases.py';\nfs.writeFileSync(pyPath, pyScript);\n\nconsole.log(`Executing tool for feature: ${feature_description}`);\n\ntry {\n  const result = execSync('/home/node/venv/bin/python3 ' + pyPath, { timeout: 30000 });\n  const out = JSON.parse(result.toString().trim().split('\\n').pop());\n  return `\u2705 SUCCESS: Logged ${out.rows_added} test case(s) for \"${feature_description}\" into unit_tests.xlsx.`;\n} catch (err) {\n  try {\n    const result2 = execSync('python3 ' + pyPath, { timeout: 30000 });\n    const out2 = JSON.parse(result2.toString().trim().split('\\n').pop());\n    return `\u2705 SUCCESS: Logged ${out2.rows_added} test case(s) for \"${feature_description}\" into unit_tests.xlsx.`;\n  } catch (err2) {\n    console.error('Excel writing failed:', err2.message);\n    return `\u274c TOOL ERROR: Could not write to Excel. Details: ${err2.message.substring(0, 100)}`;\n  }\n}"
+      },
+      "id": "a73ddfa5-8881-4176-ad61-fb6ad4a8ae06",
+      "name": "Generate Test Cases Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.1,
+      "position": [
+        1350,
+        1800
+      ]
+    },
+    {
+      "parameters": {
+        "name": "fetch_tracker_issues",
+        "description": "Fetches pending Feature issues from AssetDevOps (Redmine). Returns JSON list of issues that are 'New' or 'Ready for test'. Use this when user asks about 'What to test' or 'Fetch features'.",
+        "jsCode": "const { execSync } = require('child_process');\nconst fs = require('fs');\nconst path = '/home/node/n8n-local-files';\n\nconst fetchScript = `\nimport sys, json, requests\nfrom requests.auth import HTTPBasicAuth\nimport urllib3\nurllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)\n\nBASE_URL = 'https://assetdevops.com'\nUSERNAME = 'venu'\nPASSWORD = 'Venu@2425'\nPROJECT = 'jhs'\n\ndef fetch_issues():\n    session = requests.Session()\n    session.auth = HTTPBasicAuth(USERNAME, PASSWORD)\n    session.verify = False\n    all_issues = []\n    offset = 0\n    limit = 100\n    while True:\n        url = f'{BASE_URL}/projects/{PROJECT}/issues.json'\n        params = {'tracker_id': 2, 'status_id': 'open', 'limit': limit, 'offset': offset}\n        try:\n            resp = session.get(url, params=params, timeout=30)\n            if resp.status_code != 200:\n                print(json.dumps({'error': f'HTTP {resp.status_code}'})); sys.exit(1)\n            data = resp.json()\n            all_issues.extend(data.get('issues', []))\n            total = data.get('total_count', 0)\n            offset += limit\n            if offset >= total: break\n        except Exception as e:\n            print(json.dumps({'error': str(e)})); sys.exit(1)\n    filtered = []\n    for issue in all_issues:\n        status = issue.get('status', {}).get('name', '')\n        if status in ['Ready for test', 'New']:\n            filtered.append({'id': issue.get('id'), 'subject': issue.get('subject'), 'status': status, 'url': f'{BASE_URL}/issues/{issue.get(\"id\")}'})\n    print(json.dumps({'total': len(filtered), 'issues': filtered}, indent=2))\n\nfetch_issues()\n`;\n\nfs.writeFileSync(path + '/fetch_issues.py', fetchScript);\n\ntry {\n  const out = execSync('/home/node/venv/bin/python3 ' + path + '/fetch_issues.py', { timeout: 60000 });\n  return out.toString();\n} catch (err) {\n  return JSON.stringify({ error: 'TRACKER_FETCH_ERROR', message: err.message });\n}"
+      },
+      "id": "6a30bc88-141c-4594-9a9a-fa9338066c42",
+      "name": "Fetch Tracker Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.1,
+      "position": [
+        1150,
+        1800
+      ]
+    },
+    {
+      "parameters": {
+        "name": "run_playwright_test",
+        "description": "EXECUTES END-TO-END PLAYWRIGHT TESTS. Login is handled automatically inside the tool wrapper. Input must be ONLY the post-login action steps as a plain JavaScript string \u2014 no require statements, no browser/page setup, no login code, no async wrappers. The `page` object and `takeScreenshot(name)` function are pre-available. For login-only tests, simply pass: await takeScreenshot('Login_Dashboard');",
+        "jsCode": "const { spawnSync } = require('child_process');\nconst fs = require('fs');\nconst filesPath = '/home/node/n8n-local-files';\nconst screenshotsPath = filesPath + '/screenshots';\n\n// Ensure directories exist\nif (!fs.existsSync(filesPath)) fs.mkdirSync(filesPath, { recursive: true });\nif (!fs.existsSync(screenshotsPath)) fs.mkdirSync(screenshotsPath, { recursive: true });\n\n// ── Safety guard: reject forbidden login/setup code injected by AI ──\nconst forbiddenPatterns = [\n  /require\\s*\\(\\s*['\"]playwright/gi,\n  /chromium\\.launch/gi,\n  /browser\\.newContext/gi,\n  /browser\\.newPage/gi,\n  /page\\.goto\\s*\\(/gi,\n  /page\\.fill.*formcontrolname.*username/gi,\n  /page\\.fill.*password-field/gi,\n  /page\\.fill.*otp_Email/gi,\n  /page\\.click.*login_btn/gi,\n  /waitForSelector.*Vehicle\\s*Status/gi,\n  /text=.Sign\\s*In./gi,\n  /async\\s*\\(\\s*\\)\\s*=>/gi,\n  /browser\\.close/gi\n];\n\nlet userSteps = (typeof query === 'string') ? query.trim() : '';\n\nconst violations = forbiddenPatterns.filter(p => p.test(userSteps));\nif (violations.length > 0) {\n  return '❌ TOOL INPUT ERROR: Steps contain forbidden login/setup code (' + violations.length + ' violation(s)). Provide ONLY post-login Playwright steps. The tool handles login automatically.';\n}\n\nif (!userSteps) {\n  userSteps = \"await takeScreenshot('Login_Dashboard_Default');\";\n}\n\n// ── Build the Playwright script as a plain string (no template literals with process) ──\nconst LOGIN_URL        = 'http://103.123.173.50:1009';\nconst LOGIN_USER       = 'ranjit@assettl.com';\nconst LOGIN_PASS       = 'Rjil@12345';\nconst LOGIN_OTP        = '123456';\nconst SCREENSHOTS_DIR  = '/home/node/n8n-local-files/screenshots';\n\nconst scriptLines = [\n  \"const { chromium } = require('playwright-core');\",\n  \"(async () => {\",\n  \"  const fs = require('fs');\",\n  \"  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');\",\n  \"  const screenshots = [];\",\n  \"\",\n  \"  // Find system Chromium\",\n  \"  const chromiumPaths = [\",\n  \"    '/usr/bin/chromium',\",\n  \"    '/usr/bin/chromium-browser',\",\n  \"    '/usr/bin/google-chrome',\",\n  \"    '/usr/bin/google-chrome-stable'\",\n  \"  ];\",\n  \"  let executablePath = null;\",\n  \"  for (const p of chromiumPaths) {\",\n  \"    if (fs.existsSync(p)) { executablePath = p; break; }\",\n  \"  }\",\n  \"  if (!executablePath) {\",\n  \"    throw new Error('CHROMIUM_NOT_FOUND: Not found at: ' + chromiumPaths.join(', '));\",\n  \"  }\",\n  \"  console.log('CHROMIUM: ' + executablePath);\",\n  \"\",\n  \"  const takeScreenshot = async (page, name) => {\",\n  \"    const fileName = name + '_' + timestamp + '.png';\",\n  \"    const filePath = '\" + SCREENSHOTS_DIR + \"/' + fileName;\",\n  \"    await page.screenshot({ path: filePath, fullPage: true });\",\n  \"    console.log('SCREENSHOT_SAVED: ' + fileName);\",\n  \"    screenshots.push(fileName);\",\n  \"    return fileName;\",\n  \"  };\",\n  \"\",\n  \"  const browser = await chromium.launch({\",\n  \"    executablePath,\",\n  \"    headless: true,\",\n  \"    args: [\",\n  \"      '--no-sandbox',\",\n  \"      '--disable-setuid-sandbox',\",\n  \"      '--disable-dev-shm-usage',\",\n  \"      '--disable-gpu',\",\n  \"      '--disable-extensions'\",\n  \"    ]\",\n  \"  });\",\n  \"\",\n  \"  const context = await browser.newContext({\",\n  \"    ignoreHTTPSErrors: true,\",\n  \"    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',\",\n  \"    viewport: { width: 1920, height: 1080 }\",\n  \"  });\",\n  \"\",\n  \"  const page = await context.newPage();\",\n  \"\",\n  \"  try {\",\n  \"    // LOGIN SEQUENCE\",\n  \"    console.log('STEP: Navigating to app...');\",\n  \"    await page.goto('\" + LOGIN_URL + \"', { waitUntil: 'domcontentloaded', timeout: 30000 });\",\n  \"    await page.waitForLoadState('networkidle', { timeout: 30000 });\",\n  \"    console.log('STEP: Page loaded');\",\n  \"\",\n  \"    await page.waitForSelector('input[formcontrolname=\\\\\\\"username\\\\\\\"]', { state: 'visible', timeout: 15000 });\",\n  \"    await page.fill('input[formcontrolname=\\\\\\\"username\\\\\\\"]', '\" + LOGIN_USER + \"');\",\n  \"    console.log('STEP: Username filled');\",\n  \"\",\n  \"    await page.waitForSelector('input#password-field', { state: 'visible', timeout: 10000 });\",\n  \"    await page.fill('input#password-field', '\" + LOGIN_PASS + \"');\",\n  \"    console.log('STEP: Password filled');\",\n  \"\",\n  \"    await page.waitForSelector('button.login_btn', { state: 'visible', timeout: 10000 });\",\n  \"    await page.click('button.login_btn');\",\n  \"    console.log('STEP: Login clicked');\",\n  \"\",\n  \"    await page.waitForSelector('input#otp_Email', { state: 'visible', timeout: 10000 });\",\n  \"    await page.fill('input#otp_Email', '\" + LOGIN_OTP + \"');\",\n  \"    console.log('STEP: OTP filled');\",\n  \"\",\n  \"    await page.click('button.login_btn');\",\n  \"    console.log('STEP: OTP submitted');\",\n  \"\",\n  \"    await page.waitForSelector('text=Vehicle Status', { timeout: 20000 });\",\n  \"    console.log('STEP: LOGIN SUCCESS - Dashboard loaded');\",\n  \"\",\n  \"    // USER STEPS START\",\n  // Inject the AI-provided steps but rewrite takeScreenshot calls to pass page\n  \"    const takeScreenshot = async (name) => {\",\n  \"      const fileName = name + '_' + timestamp + '.png';\",\n  \"      const filePath = '\" + SCREENSHOTS_DIR + \"/' + fileName;\",\n  \"      await page.screenshot({ path: filePath, fullPage: true });\",\n  \"      console.log('SCREENSHOT_SAVED: ' + fileName);\",\n  \"      screenshots.push(fileName);\",\n  \"      return fileName;\",\n  \"    };\",\n  \"    \" + userSteps,\n  \"    // USER STEPS END\",\n  \"\",\n  \"    await page.screenshot({ path: '\" + SCREENSHOTS_DIR + \"/SUCCESS_FINAL_' + timestamp + '.png', fullPage: true });\",\n  \"    console.log('SCREENSHOT_SAVED: SUCCESS_FINAL_' + timestamp + '.png');\",\n  \"    screenshots.push('SUCCESS_FINAL_' + timestamp + '.png');\",\n  \"    console.log('TEST_PASSED');\",\n  \"    console.log('ALL_SCREENSHOTS: ' + JSON.stringify(screenshots));\",\n  \"\",\n  \"  } catch (err) {\",\n  \"    console.error('TEST_FAILED: ' + err.message);\",\n  \"    try {\",\n  \"      await page.screenshot({ path: '\" + SCREENSHOTS_DIR + \"/FAILURE_ERROR_' + timestamp + '.png', fullPage: true });\",\n  \"      console.log('SCREENSHOT_SAVED: FAILURE_ERROR_' + timestamp + '.png');\",\n  \"      screenshots.push('FAILURE_ERROR_' + timestamp + '.png');\",\n  \"    } catch (ssErr) {\",\n  \"      console.error('SCREENSHOT_FAILED: ' + ssErr.message);\",\n  \"    }\",\n  \"    console.log('ALL_SCREENSHOTS: ' + JSON.stringify(screenshots));\",\n  \"    throw err;\",\n  \"  } finally {\",\n  \"    await browser.close();\",\n  \"    console.log('BROWSER_CLOSED');\",\n  \"  }\",\n  \"})().catch(err => {\",\n  \"  console.error('FATAL: ' + err.message);\",\n  \"  setTimeout(() => { throw err; }, 0);\",\n  \"});\"\n];\n\nconst scriptContent = scriptLines.join('\\n');\n\nconst scriptPath = filesPath + '/playwright_test.js';\nfs.writeFileSync(scriptPath, scriptContent);\n\n// Use spawnSync — no process.env reference needed\nconst result = spawnSync('node', [scriptPath], {\n  timeout: 180000,\n  encoding: 'utf8',\n  env: {\n    HOME: '/home/node',\n    PATH: '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',\n    NODE_PATH: '/home/node/node_modules:/usr/local/lib/node_modules',\n    PLAYWRIGHT_BROWSERS_PATH: '0'\n  }\n});\n\nconst stdout = result.stdout || '';\nconst stderr = result.stderr || '';\nconst exitCode = result.status;\n\nlet diagnosis = '';\nif (stderr.includes('CHROMIUM_NOT_FOUND') || stderr.includes(\"Executable doesn't exist\")) {\n  diagnosis = '\\n\\nDIAGNOSIS: Chromium not installed. SSH into the n8n server and run:\\n  apt-get install -y chromium-browser\\n  OR: apt-get install -y chromium';\n} else if (stderr.includes('Cannot find module') && stderr.includes('playwright')) {\n  diagnosis = '\\n\\nDIAGNOSIS: playwright-core not installed. Run:\\n  cd /home/node && npm install playwright-core';\n} else if (stdout.includes('Timeout') || stderr.includes('Timeout')) {\n  diagnosis = '\\n\\nDIAGNOSIS: Selector timeout. The app may be slow or a selector is wrong. Check app at ' + LOGIN_URL;\n} else if (stderr.includes('net::ERR') || stderr.includes('ECONNREFUSED')) {\n  diagnosis = '\\n\\nDIAGNOSIS: Cannot reach ' + LOGIN_URL + ' from the n8n server. Check network/firewall.';\n}\n\nif (exitCode === 0) {\n  return '✅ PLAYWRIGHT EXECUTION LOGS:\\n' + stdout;\n} else {\n  return '❌ PLAYWRIGHT EXECUTION FAILED (exit code ' + exitCode + '):\\n\\nSTDOUT:\\n' + stdout + '\\n\\nSTDERR:\\n' + stderr + diagnosis;\n}\n"
+      },
+      "id": "4cc3d1da-1251-4167-8a6a-b80a2f7908de",
+      "name": "Run Playwright Test Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.1,
+      "position": [
+        1550,
+        1800
+      ]
+    },
+    {
+      "parameters": {
+        "model": "gemini-2.5-flash",
+        "options": {}
+      },
+      "id": "119953b0-2962-4505-93f8-d0908b8d992d",
+      "name": "Google Gemini Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        850,
+        1800
+      ],
+      "retryOnFail": true,
+      "maxRetries": 5,
+      "waitBetweenRetries": 3000,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "5CFrXY2hZilaf3ns",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "direct-download",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "54589d3a-6943-4f91-872e-0a56828591e1",
+      "name": "Download Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        1050,
+        1300
+      ]
+    },
+    {
+      "parameters": {
+        "filePath": "=/home/node/n8n-local-files/{{ $json.query.file }}"
+      },
+      "id": "68593d4b-7a54-4f92-983f-1a573d4c91e2",
+      "name": "Read File from Disk",
+      "type": "n8n-nodes-base.readBinaryFile",
+      "typeVersion": 1,
+      "position": [
+        1250,
+        1300
+      ]
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Disposition",
+                "value": "=attachment; filename=\"{{ $node[\"Download Webhook\"].json.query.file.split('/').pop() }}\""
+              }
+            ]
+          }
+        }
+      },
+      "id": "79604d5c-8b65-4f93-9940-2b584d5d12f3",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1450,
+        1300
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "final-portal",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "a1d2e3f4-b5c6-4d7e-8f9a-0b1c2d3e4f5a",
+      "name": "Portal Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        100,
+        1100
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const fs = require('fs');\nconst path = require('path');\nconst baseDir = '/home/node/n8n-local-files';\n\nfunction getFiles(dir, allFiles = []) {\n  if (!fs.existsSync(dir)) return allFiles;\n  const files = fs.readdirSync(dir);\n  for (const file of files) {\n    const name = path.join(dir, file);\n    if (fs.statSync(name).isDirectory()) {\n      getFiles(name, allFiles);\n    } else {\n      const relativePath = path.relative(baseDir, name);\n      const stats = fs.statSync(name);\n      if (['.xlsx', '.pdf', '.png'].includes(path.extname(file).toLowerCase())) {\n        allFiles.push({\n          name: file,\n          path: relativePath,\n          extension: path.extname(file).slice(1).toUpperCase(),\n          size: (stats.size / 1024).toFixed(1) + ' KB',\n          mtime: stats.mtime\n        });\n      }\n    }\n  }\n  return allFiles;\n}\n\nconst fileList = getFiles(baseDir);\nfileList.sort((a, b) => b.mtime - a.mtime);\n\nreturn { files: fileList };"
+      },
+      "id": "b2e3f4g5-c6d7-4e8f-9a0b-1c2d3e4f5a6b",
+      "name": "List Local Files",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        300,
+        1100
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const files = $input.item.json.files;\n\nconst html = `\n<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>QA Automation Portal | JioHumsafar</title>\n    <link href=\"https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap\" rel=\"stylesheet\">\n    <style>\n        :root {\n            --primary: #007bff;\n            --secondary: #6c757d;\n            --dark: #0f172a;\n            --card-bg: rgba(30, 41, 59, 0.7);\n            --text: #f8fafc;\n            --accent: #38bdf8;\n        }\n\n        body {\n            font-family: 'Outfit', sans-serif;\n            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);\n            color: var(--text);\n            margin: 0;\n            padding: 40px 20px;\n            min-height: 100vh;\n        }\n\n        .container {\n            max-width: 1000px;\n            margin: 0 auto;\n        }\n\n        header {\n            text-align: center;\n            margin-bottom: 50px;\n        }\n\n        h1 {\n            font-size: 2.5rem;\n            margin-bottom: 10px;\n            background: linear-gradient(to right, #38bdf8, #818cf8);\n            -webkit-background-clip: text;\n            -webkit-text-fill-color: transparent;\n        }\n\n        .subtitle {\n            color: var(--secondary);\n            font-size: 1.1rem;\n        }\n\n        .grid {\n            display: grid;\n            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));\n            gap: 20px;\n        }\n\n        .card {\n            background: var(--card-bg);\n            backdrop-filter: blur(10px);\n            border: 1px solid rgba(255, 255, 255, 0.1);\n            border-radius: 16px;\n            padding: 24px;\n            transition: transform 0.3s ease, hover 0.3s ease;\n            display: flex;\n            flex-direction: column;\n            gap: 15px;\n        }\n\n        .card:hover {\n            transform: translateY(-5px);\n            border-color: var(--accent);\n            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);\n        }\n\n        .file-info {\n            flex-grow: 1;\n        }\n\n        .file-name {\n            font-weight: 600;\n            font-size: 1.1rem;\n            margin-bottom: 4px;\n            word-break: break-all;\n        }\n\n        .file-meta {\n            color: var(--secondary);\n            font-size: 0.85rem;\n        }\n\n        .btn-download {\n            display: inline-block;\n            background: var(--primary);\n            color: white;\n            text-decoration: none;\n            padding: 12px 20px;\n            border-radius: 8px;\n            font-weight: 600;\n            text-align: center;\n            transition: background 0.2s;\n        }\n\n        .btn-download:hover {\n            background: #0056b3;\n        }\n\n        .tag {\n            display: inline-block;\n            padding: 4px 8px;\n            border-radius: 4px;\n            font-size: 0.7rem;\n            text-transform: uppercase;\n            font-weight: bold;\n            margin-bottom: 8px;\n        }\n\n        .tag-xlsx { background: #15803d; color: #bbf7d0; }\n        .tag-pdf { background: #b91c1c; color: #fecaca; }\n        .tag-png { background: #7c3aed; color: #ede9fe; }\n\n        .empty-state {\n            text-align: center;\n            padding: 100px;\n            color: var(--secondary);\n        }\n    </style>\n</head>\n<body>\n    <div class=\"container\">\n        <header>\n            <h1>QA Automation Portal</h1>\n            <p class=\"subtitle\">Direct access to your test reports, screenshots, and logs</p>\n        </header>\n\n        <div class=\"grid\">\n            ${files.map(file => `\n                <div class=\"card\">\n                    <div class=\"tag tag-${file.extension.toLowerCase()}\">${file.extension}</div>\n                    <div class=\"file-info\">\n                        <div class=\"file-name\">${file.name}</div>\n                        <div class=\"file-meta\">Size: ${file.size} • ${new Date(file.mtime).toLocaleString()}</div>\n                    </div>\n                    <a href=\"/webhook/direct-download?file=${file.path}\" class=\"btn-download\">Download File</a>\n                </div>\n            `).join('')}\n        </div>\n\n        ${files.length === 0 ? '<div class=\"empty-state\">No files generated yet. Run a test to see results!</div>' : ''}\n    </div>\n</body>\n</html>\n`;\n\nreturn { html };"
+      },
+      "id": "c3f4g5h6-d7e8-4f9a-0b1c-2d3e4f5a6b7c",
+      "name": "Generate Portal HTML",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        500,
+        1100
+      ]
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html"
+              }
+            ]
+          }
+        }
+      },
+      "id": "d4g5h6i7-e8f9-4a0b-1c2d-3e4f5a6b7c8d",
+      "name": "Respond with Portal",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        700,
+        1100
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Check Cache",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Cache": {
+      "main": [
+        [
+          {
+            "node": "Is Cached?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Cached?": {
+      "main": [
+        [
+          {
+            "node": "Format Cached Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Cached Response": {
+      "main": [
+        [
+          {
+            "node": "Merge Branches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Save Cache",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Cache": {
+      "main": [
+        [
+          {
+            "node": "Merge Branches",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Branches": {
+      "main": [
+        [
+          {
+            "node": "Final Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Window Buffer Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Test Cases Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Tracker Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Playwright Test Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Webhook": {
+      "main": [
+        [
+          {
+            "node": "Read File from Disk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read File from Disk": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Portal Webhook": {
+      "main": [
+        [
+          {
+            "node": "List Local Files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List Local Files": {
+      "main": [
+        [
+          {
+            "node": "Generate Portal HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Portal HTML": {
+      "main": [
+        [
+          {
+            "node": "Respond with Portal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "f5ecfd3e-4bf2-438e-8d0f-b3c2704a4d43",
+  "meta": {
+    "instanceId": "7dc2c7850388c97d4fc655e0a41d391ff9e37f90f0d124dec802e308684c21fa"
+  },
+  "id": "URDXGeykzboBe4hZ",
+  "tags": []
+}

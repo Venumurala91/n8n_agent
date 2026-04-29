@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  n8n:
+    build: .
+    container_name: n8n-selenium-agent
+    volumes:
+      - n8n_data:/root/.n8n
+      - ./local_files:/home/node/n8n-local-files
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - NODE_ENV=production
+      - WEBHOOK_URL=http://localhost:5678/
+      - GENERIC_TIMEZONE=Asia/Kolkata
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
+      - NODE_FUNCTION_ALLOW_BUILTIN=*
+      - NODE_FUNCTION_ALLOW_EXTERNAL=fs,child_process
+      - N8N_RUNNERS_HEARTBEAT_INTERVAL=300
+      - N8N_RUNNERS_MODE=internal
+    restart: always
+
+volumes:
+  n8n_data:
+

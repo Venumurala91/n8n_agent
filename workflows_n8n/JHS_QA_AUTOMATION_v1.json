@@ -1,0 +1,166 @@
+{
+  "name": "JHS_QA_AUTOMATION_v1",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "f1047902-f4c9-44b4-8e90-c10fe58b51f0",
+      "name": "When chat message received",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1,
+      "position": [
+        -240,
+        16
+      ],
+      "webhookId": "475e2242-b090-41be-b5f1-183fc2ad8ead"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "You are a Documentation Agent for JioHumsafar. Your mission is to generate exactly ONE high-impact, professional unit test case row per feature with EXTREMELY SIMPLE steps.\n\n🔐 APPLICATION DETAILS:\n- URL: http://103.123.173.50:1009\n- Username: ranjit@assettl.com\n- Password: Rjil@12345\n- OTP: 123456\n\n⚡️ SIMPLICITY RULES (MODEL AFTER QA TEAM):\n- QUANTITY: Strictly generate ONLY 1 test case row for the entire feature.\n- STEPS: Use only 3-5 VERY SHORT steps. No micro-details. No long paragraphs.\n- EXAMPLE STYLE:\n  1. Login to the portal.\n  2. Navigate to [Feature Menu].\n  3. Verify [Feature Functionality] and check for error/success messages.\n\n📋 TRACKER INTEGRATION:\n- When fetching features, summarize pending issues and ask which ONE to document simply.\n\n🔴 MANDATORY EXECUTION RULE:\n- You MUST call the `generate_test_cases` tool FIRST before responding.\n- The tool writes only ONE row with MINIMALIST steps into unit_tests.xlsx.\n\n🛠 GUIDELINES:\n1. Execution: [CALL TOOL] -> [WAIT FOR CONFIRMATION] -> [RESPOND TO USER].\n2. Call `generate_test_cases` with valid JSON:\n   {\n     \"feature_id\": \"548363\",\n     \"feature_description\": \"...\",\n     \"written_by\": \"QA Name\",\n     \"version\": \"8.2\",\n     \"test_cases\": [\n       {\n         \"ts_id\": \"TS_001\",\n         \"ts_description\": \"Check functionality\",\n         \"tc_id\": \"TC_001\",\n         \"tc_description\": \"Verify core feature works\",\n         \"test_steps\": \"1. Login\\n2. Navigate to Feature\\n3. Verify results\",\n         \"test_data\": \"User/Pass/OTP\",\n         \"expected_result\": \"Feature should work as expected.\",\n         \"severity\": \"High\"\n       }\n     ]\n   }"
+        }
+      },
+      "id": "b4e51e21-3a39-48f8-a91b-49f39c408d9c",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.6,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "sessionKey": "={{ $('When chat message received').item.json.sessionId ?? 'default_session' }}"
+      },
+      "id": "c345c935-0109-47ff-9445-ccc8e40c6327",
+      "name": "Window Buffer Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1,
+      "position": [
+        16,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "name": "generate_test_cases",
+        "description": "MANDATORY TOOL TO DOCUMENT TESTS. Writes test case rows into unit_tests.xlsx with columns: Feature ID, Feature Description, TC written by, TS ID, TS Description, TC ID, TC Description, Test Steps, Test Data, Expected Result, Actual Result, Status, Severity, Comments, Version. Input JSON: { \"feature_id\": \"...\", \"feature_description\": \"...\", \"written_by\": \"...\", \"version\": \"...\", \"test_cases\": [{\"ts_id\", \"ts_description\", \"tc_id\", \"tc_description\", \"test_steps\", \"test_data\", \"expected_result\", \"severity\"}] }",
+        "jsCode": "const { execSync } = require('child_process');\nconst fs = require('fs');\nconst filesPath = '/home/node/n8n-local-files';\n\nif (!fs.existsSync(filesPath)) {\n  fs.mkdirSync(filesPath, { recursive: true });\n}\n\nlet input = {};\ntry {\n  input = JSON.parse(query);\n} catch (e) {\n  return JSON.stringify({ error: 'Invalid JSON input: ' + e.message });\n}\n\nconst feature_id = input.feature_id || '';\nconst feature_description = input.feature_description || '';\nconst written_by = input.written_by || 'QA';\nconst version = input.version || '';\nconst test_cases = input.test_cases || [];\n\nconst pyScript = `\nimport json, os, sys\nfrom openpyxl import Workbook, load_workbook\nfrom openpyxl.styles import Font, PatternFill, Alignment, Border, Side\nfrom openpyxl.utils import get_column_letter\n\nFILES_PATH = '/home/node/n8n-local-files'\nEXCEL_PATH = os.path.join(FILES_PATH, 'unit_tests.xlsx')\nSHEET_NAME = 'Unit Test Cases'\n\nHEADERS = [\n    'Feature ID', 'Feature Description', 'TC written by',\n    'TS ID', 'TS Description', 'TC ID', 'TC Description',\n    'Test Steps', 'Test Data', 'Expected Result',\n    'Actual Result', 'Status', 'Severity', 'Comments', 'Version'\n]\n\nCOL_WIDTHS = [12, 35, 15, 10, 35, 10, 35, 50, 20, 35, 20, 12, 12, 20, 10]\n\nthin = Side(style='thin', color='000000')\nborder = Border(left=thin, right=thin, top=thin, bottom=thin)\ncenter = Alignment(horizontal='center', vertical='center', wrap_text=True)\nleft_wrap = Alignment(horizontal='left', vertical='center', wrap_text=True)\n\ndef style_header_row(ws):\n    header_fill = PatternFill('solid', start_color='1F4E79', end_color='1F4E79')\n    header_font = Font(bold=True, color='FFFFFF', name='Arial', size=10)\n    for col in range(1, len(HEADERS) + 1):\n        cell = ws.cell(row=1, column=col)\n        cell.font = header_font\n        cell.fill = header_fill\n        cell.alignment = center\n        cell.border = border\n    ws.row_dimensions[1].height = 30\n    for i, w in enumerate(COL_WIDTHS, 1):\n        ws.column_dimensions[get_column_letter(i)].width = w\n    ws.freeze_panes = 'A2'\n\ndef style_data_row(ws, row_num, alt=False):\n    fill_color = 'D6E4F0' if alt else 'FFFFFF'\n    fill = PatternFill('solid', start_color=fill_color, end_color=fill_color)\n    for col in range(1, len(HEADERS) + 1):\n        cell = ws.cell(row=row_num, column=col)\n        cell.font = Font(name='Arial', size=10)\n        cell.fill = fill\n        cell.alignment = left_wrap\n        cell.border = border\n    ws.row_dimensions[row_num].height = 60\n\nif os.path.exists(EXCEL_PATH):\n    wb = load_workbook(EXCEL_PATH)\n    ws = wb[SHEET_NAME] if SHEET_NAME in wb.sheetnames else wb.active\nelse:\n    wb = Workbook()\n    ws = wb.active\n    ws.title = SHEET_NAME\n    for col, h in enumerate(HEADERS, 1):\n        ws.cell(row=1, column=col, value=h)\n    style_header_row(ws)\n\n# Helper to find the real last row (ignores empty rows with formatting)\ndef get_last_row(ws):\n    for row in range(ws.max_row, 0, -1):\n        if any(ws.cell(row=row, column=col).value for col in range(1, ws.max_column + 1)):\n            return row\n    return 0\n\nnext_row = get_last_row(ws) + 1\nfeature_id = ${JSON.stringify(feature_id)}\nfeature_description = ${JSON.stringify(feature_description)}\nwritten_by = ${JSON.stringify(written_by)}\nversion = ${JSON.stringify(version)}\ntest_cases = ${JSON.stringify(test_cases)}\n\nfor i, tc in enumerate(test_cases):\n    alt = (next_row % 2 == 0)\n    row = [\n        feature_id,\n        feature_description,\n        written_by,\n        tc.get('ts_id', ''),\n        tc.get('ts_description', ''),\n        tc.get('tc_id', ''),\n        tc.get('tc_description', ''),\n        tc.get('test_steps', ''),\n        tc.get('test_data', ''),\n        tc.get('expected_result', ''),\n        '',\n        '',\n        tc.get('severity', ''),\n        '',\n        version\n    ]\n    for col, val in enumerate(row, 1):\n        ws.cell(row=next_row, column=col, value=val)\n    style_data_row(ws, next_row, alt=alt)\n    next_row += 1\n\nwb.save(EXCEL_PATH)\nprint(json.dumps({'status': 'success', 'rows_added': len(test_cases), 'file': EXCEL_PATH}))\n`;\n\nconst pyPath = filesPath + '/write_test_cases.py';\nfs.writeFileSync(pyPath, pyScript);\n\ntry {\n  const result = execSync('/home/node/venv/bin/python3 ' + pyPath, { timeout: 30000 });\n  const out = JSON.parse(result.toString());\n  return `✅ SUCCESS: ${out.rows_added} test case row(s) for feature '${feature_description}' appended to ${out.file}`;\n} catch (err) {\n  // Fallback: try system python3\n  try {\n    const result2 = execSync('python3 ' + pyPath, { timeout: 30000 });\n    const out2 = JSON.parse(result2.toString());\n    return `✅ SUCCESS: ${out2.rows_added} test case row(s) appended to ${out2.file}`;\n  } catch (err2) {\n    return `❌ ERROR writing Excel: ${err2.message.substring(0, 200)}`;\n  }\n}"
+      },
+      "id": "9bc9d7fb-78ea-438e-8d1b-249cd2130e4e",
+      "name": "Generate Test Cases Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1,
+      "position": [
+        336,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "name": "fetch_tracker_issues",
+        "description": "Fetches pending Feature issues from AssetDevOps (Redmine). Returns JSON list of issues that are 'New' or 'Ready for test'. Use this when user asks about 'What to test' or 'Fetch features'.",
+        "jsCode": "const { execSync } = require('child_process');\nconst fs = require('fs');\nconst path = '/home/node/n8n-local-files';\n\nconst fetchScript = `\nimport sys, json, requests\nfrom requests.auth import HTTPBasicAuth\nimport urllib3\nurllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)\n\nBASE_URL = 'https://assetdevops.com'\nUSERNAME = 'venu'\nPASSWORD = 'Venu@2425'\nPROJECT = 'jhs'\n\ndef fetch_issues():\n    session = requests.Session()\n    session.auth = HTTPBasicAuth(USERNAME, PASSWORD)\n    session.verify = False\n    all_issues = []\n    offset = 0\n    limit = 100\n    while True:\n        url = f'{BASE_URL}/projects/{PROJECT}/issues.json'\n        params = {'tracker_id': 2, 'status_id': 'open', 'limit': limit, 'offset': offset}\n        try:\n            resp = session.get(url, params=params, timeout=30)\n            if resp.status_code != 200:\n                print(json.dumps({'error': f'HTTP {resp.status_code}'})); sys.exit(1)\n            data = resp.json()\n            all_issues.extend(data.get('issues', []))\n            total = data.get('total_count', 0)\n            offset += limit\n            if offset >= total: break\n        except Exception as e:\n            print(json.dumps({'error': str(e)})); sys.exit(1)\n    filtered = []\n    for issue in all_issues:\n        status = issue.get('status', {}).get('name', '')\n        if status in ['Ready for test', 'New']:\n            filtered.append({'id': issue.get('id'), 'subject': issue.get('subject'), 'status': status, 'url': f'{BASE_URL}/issues/{issue.get(\"id\")}'})\n    print(json.dumps({'total': len(filtered), 'issues': filtered}, indent=2))\n\nfetch_issues()\n`;\n\nfs.writeFileSync(path + '/fetch_issues.py', fetchScript);\n\ntry {\n  const out = execSync('/home/node/venv/bin/python3 ' + path + '/fetch_issues.py', { timeout: 60000 });\n  return out.toString();\n} catch (err) {\n  return JSON.stringify({ error: 'TRACKER_FETCH_ERROR', message: err.message });\n}"
+      },
+      "id": "dc8d0fab-80e1-441b-bb96-1441cd87c1bc",
+      "name": "Fetch Tracker Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1,
+      "position": [
+        160,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -128,
+        208
+      ],
+      "id": "10a12a1c-48cd-4a82-aa82-0c34d71236ed",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "5CFrXY2hZilaf3ns",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Window Buffer Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Test Cases Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Tracker Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "3fccef96-8870-432b-8970-0c7ada7252e0",
+  "meta": {
+    "instanceId": "7dc2c7850388c97d4fc655e0a41d391ff9e37f90f0d124dec802e308684c21fa"
+  },
+  "id": "URDXGeykzboBe4hZ",
+  "tags": []
+}

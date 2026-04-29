@@ -1,0 +1,36 @@
+Feature ID,Feature Description,TC written by,TS ID,TS Description,TC ID,TC Description,Test Steps,Test Data,Expected Result,Actual Result,Status,Severity,Comments,Version
+LOGIN_001,User Login Functionality,Documentation Agent,TS_LOGIN_001,Verify successful user login,TC_LOGIN_001,"Test valid username, password, and OTP login","1. Navigate to the login page.
+2. Enter valid Username, Password, and OTP.
+3. Click 'Login' and verify successful redirection to the dashboard.","Username: ranjit@assettl.com, Password: Rjil@12345, OTP: 123456",User should successfully log in and be redirected to the dashboard.,,,High,,8.2
+537652,Verify feature functionality for ID 537652,Ranjit,TS_001,Check core functionality,TC_001,Verify feature 537652 works as expected.,"1. Login to the portal.
+2. Navigate to the feature section related to 537652.
+3. Perform actions and verify output/messages.","Username: ranjit@assettl.com, Password: Rjil@12345, OTP: 123456",Feature 537652 should execute successfully and display correct results.,,,High,,8.2
+564472,Count of Trips under different stages on Multi Cargo trip pages,QA Team,TS_001,Verify trip count accuracy,TC_001,Check trip counts under different stages on multi-cargo trip pages,"1. Login to the portal.
+2. Navigate to Multi Cargo trip pages.
+3. Verify the count of trips under different stages.","Username: ranjit@assettl.com, Password: Rjil@12345, OTP: 123456",The count of trips under different stages should be accurate on Multi Cargo trip pages.,,,High,,8.2
+548363,JHS Configurable Product Variant Setup During Account,Documentation Agent,TS_001,Verify JHS Configurable Product Variant Setup,TC_001,Check if product variant setup works during account creation,"1. Login to the portal.
+2. Initiate account setup with product variants.
+3. Verify product variant configuration.","Username: ranjit@assettl.com, Password: Rjil@12345, OTP: 123456, Sample Product Variant Data",Configurable product variants should be set up correctly during account creation.,,,High,,8.2
+548363,JHS Configurable Product Variant Setup During Account,Documentation Agent,TS_001,Verify configurable product variant setup,TC_001,Verify that configurable product variants are correctly set up during account creation.,"1. Login to the portal.
+2. Navigate to the account setup page.
+3. Configure and save product variants for a new account.
+4. Verify the saved product variant configurations.","Username: ranjit@assettl.com, Password: Rjil@12345, OTP: 123456, New Account Details, Product Variant Configurations",Configurable product variants should be successfully set up and displayed correctly for the new account.,,,High,,8.2
+559215,Download option of subscribed alerts with details,Documentation Agent,TS_001,Verify download of subscribed alerts,TC_001,Ensure subscribed alerts with details can be downloaded,"1. Login to the portal.
+2. Navigate to subscribed alerts section.
+3. Use the download option for alerts.
+4. Verify the downloaded file content and details.",User/Pass/OTP,Subscribed alerts with details should be downloaded successfully in the expected format.,,,High,,8.2
+548363,Verify Lite selection,Documentation Agent,TS_001,Verify Lite selection functionality,TC_001,Ensure Lite selection works as expected,"1. Login to the portal.
+2. Navigate to the relevant section for 'Lite selection'.
+3. Select a 'Lite' option.
+4. Verify the 'Lite' selection is applied correctly.","Username: ranjit@assettl.com, Password: Rjil@12345, OTP: 123456",'Lite' selection should be successfully applied and reflected.,,,High,,8.2
+UI_VideoAlerts_GridBorders_Issue,Dashboard > Video > Video Alerts > Grid Borders are not proper,QA Name,TS_001,Verify grid border rendering,TC_001,Check proper rendering of grid borders in Video Alerts,"1. Login to the portal.
+2. Navigate to Dashboard > Video > Video Alerts.
+3. Observe the grid borders.
+4. Verify borders are rendered properly as per design.","Username: ranjit@assettl.com, Password: Rjil@12345, OTP: 123456",Grid borders in Video Alerts section should be rendered properly without any visual defects or misalignment.,,,High,,8.2
+564303,Verify core functionality of feature 564303,Documentation Agent,TS_001,Check feature 564303 functionality,TC_001,Verify core functionality of feature 564303,"1. Login to the portal.
+2. Navigate to Feature ID 564303.
+3. Verify the functionality and check for error/success messages.","Username: ranjit@assettl.com, Password: Rjil@12345, OTP: 123456",Feature 564303 should work as expected.,,,High,,8.2
+564303,User Tag- Vehicle Count to be increased to 5K,QA Name,TS_001,Verify vehicle count increase for user tags,TC_001,Check if a user can tag up to 5000 vehicles,"1. Login to the portal.
+2. Navigate to User Tag management.
+3. Attempt to tag up to 5000 vehicles to a user.
+4. Verify the system allows the count increase.","Username/Password/OTP, User tag data, Vehicle IDs",The system should successfully allow tagging up to 5000 vehicles for a user.,,,High,,8.2

@@ -1,0 +1,6 @@
+selenium
+pytest
+requests
+openpyxl
+lxml
+urllib3
